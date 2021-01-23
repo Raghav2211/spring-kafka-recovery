@@ -5,8 +5,8 @@ import java.util.Map;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -16,11 +16,16 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
+import org.springframework.util.backoff.FixedBackOff;
 
 import example.spring.kafka.recovery.consumer.BootstrapConsumerErrorHandler;
+import example.spring.kafka.recovery.consumer.exception.AllRetryExhaustException;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
-@ConditionalOnBean(type = "example.spring.kafka.recovery.config.KafkaConfig")
+@Slf4j
 public class KafkaListenerConfig {
 
     private KafkaConfig kafkaConfig;
@@ -50,26 +55,34 @@ public class KafkaListenerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory(
+    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaBootstrapListenerContainerFactory(
             BootstrapConsumerErrorHandler bootstrapConsumerErrorHandler) {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConcurrency(1);
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
-
-//        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkTemplate, (r, e) -> {
-//            if (e instanceof IllegalArgumentException) {
-//                log.error("Sending to Dlq topic on poisonpill data ----- {} ", e.getMessage());
-//                return new TopicPartition(dlqTopic, r.partition());
-//            } else {
-//                log.error("Unknown exception occurs {}", e.getMessage());
-//                return new TopicPartition(unknowntopic, r.partition());
-//            }
-//        });
-//        var errorHandler = new SeekToCurrentErrorHandler(recoverer);
-//        factory.setErrorHandler(errorHandler);
-
         factory.setErrorHandler(bootstrapConsumerErrorHandler);
+
+        return factory;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaRetryListenerContainerFactory(
+            KafkaTemplate<String, String> kafkTemplate) {
+        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConcurrency(1);
+        factory.setConsumerFactory(consumerFactory());
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+        factory.setErrorHandler(
+                new SeekToCurrentErrorHandler(new DeadLetterPublishingRecoverer(kafkTemplate, (record, exception) -> {
+                    if (exception instanceof AllRetryExhaustException) {
+                        log.error("Sending to Dlq topic on poisonpill data ----- {} ", exception.getMessage());
+                        return new TopicPartition(dlqTopic, record.partition());
+                    } else {
+                        return null;
+                    }
+
+                }), new FixedBackOff(10000, 5)));
 
         return factory;
     }

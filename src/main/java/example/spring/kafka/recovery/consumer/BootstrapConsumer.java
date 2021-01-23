@@ -1,5 +1,7 @@
 package example.spring.kafka.recovery.consumer;
 
+import java.util.Arrays;
+
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -18,12 +20,11 @@ public class BootstrapConsumer {
         SUCCESS, POISON_PILL, RETRY
     }
 
-    @KafkaListener(topics = "${app.kafka.inbound.springrecovery.bootstrap.topic}", groupId = "${app.kafka.inbound.springrecovery.bootstrap.groupId}")
+    @KafkaListener(topics = "${app.kafka.inbound.springrecovery.bootstrap.topic}", groupId = "${app.kafka.inbound.springrecovery.bootstrap.groupId}", containerFactory = "kafkaBootstrapListenerContainerFactory")
     public void onReceiving(String data, @Header(KafkaHeaders.OFFSET) Integer offset,
             @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment ack) {
         processMessages(data, offset, partition, topic);
-        log.info("Data successfully consumed");
         ack.acknowledge();
     }
 
@@ -31,6 +32,7 @@ public class BootstrapConsumer {
         if (data.toUpperCase().trim().equals(RecordType.SUCCESS.name())) {
             log.info("Processing topic = {}, partition = {}, offset = {}, success data = {}", topic, partition, offset,
                     data);
+            log.info("Data successfully consumed");
         } else if (data.toUpperCase().trim().equals(RecordType.POISON_PILL.name())) {
             log.info("Processing topic = {}, partition = {}, offset = {}, poison pill data = {}", topic, partition,
                     offset, data);
@@ -39,6 +41,8 @@ public class BootstrapConsumer {
             log.info("Processing topic = {}, partition = {}, offset = {}, retry data = {}", topic, partition, offset,
                     data);
             throw new RetryException(data);
+        } else {
+            log.info("Unknown message retrieve , Message should be in {} ", Arrays.asList(RecordType.values()));
         }
     }
 }

@@ -54,7 +54,8 @@ public class BootstrapConsumerErrorHandler implements ContainerAwareErrorHandler
     private void sendErrorDataonTopic(Exception thrownException, Consumer<?, ?> consumer,
             ConsumerRecord<?, ?> failRecord, String topicToSend, BootstrapConsumer.RecordType recordType) {
         try {
-            kafkaTemplate.send(topicToSend, recordType.name());
+            kafkaTemplate.send(topicToSend, failRecord.partition(), String.valueOf(failRecord.key()),
+                    recordType.name());
             consumer.seek(new TopicPartition(failRecord.topic(), failRecord.partition()), failRecord.offset() + 1);
         } catch (Exception e) {
             consumer.seek(new TopicPartition(failRecord.topic(), failRecord.partition()), failRecord.offset());

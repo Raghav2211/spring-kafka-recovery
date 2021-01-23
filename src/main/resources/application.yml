@@ -25,9 +25,12 @@ app:
         bootstrap:
           topic: local.springrecovery.bootstrap
           groupId: springrecovery.bootstrap
+        retry:
+          topic: local.springrecovery.retry
+          groupId: springrecovery.retry
     outbound:
       springrecovery:
         dlq:
           topic: local.springrecovery.dlq
         retry:
-          topic: local.springrecovery.retry
+          topic: ${app.kafka.inbound.springrecovery.retry.topic}
