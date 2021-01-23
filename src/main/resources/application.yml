@@ -1,0 +1,33 @@
+---
+server:
+  port: 8080
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    properties:
+      reconnect.backoff.ms: 1000
+      retry.backoff.ms: 10000
+    consumer:
+      retry-backoff: 1000
+      retry-attempts: 3
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+  application:
+    name: spring-kafka-recovery
+    version: "${appVersion}"
+app:
+  kafka:
+    inbound:
+      springrecovery:
+        bootstrap:
+          topic: local.springrecovery.bootstrap
+          groupId: springrecovery.bootstrap
+    outbound:
+      springrecovery:
+        dlq:
+          topic: local.springrecovery.dlq
+        retry:
+          topic: local.springrecovery.retry
