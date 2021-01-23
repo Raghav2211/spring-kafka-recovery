@@ -36,7 +36,7 @@ public class BootstrapConsumer {
         } else if (data.toUpperCase().trim().equals(RecordType.POISON_PILL.name())) {
             log.info("Processing topic = {}, partition = {}, offset = {}, poison pill data = {}", topic, partition,
                     offset, data);
-            throw new PoisonPillException(data);
+            throw new PoisonPillException(data, partition, offset);
         } else if (data.toUpperCase().trim().equals(RecordType.RETRY.name())) {
             log.info("Processing topic = {}, partition = {}, offset = {}, retry data = {}", topic, partition, offset,
                     data);
