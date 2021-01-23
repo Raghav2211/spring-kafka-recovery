@@ -44,24 +44,14 @@ public class BootstrapConsumerErrorHandler implements ContainerAwareErrorHandler
             sendErrorDataonTopic(thrownException, consumer, record, dlqTopic, BootstrapConsumer.RecordType.POISON_PILL,
                     poisonPillException.getSourcePartition(), poisonPillException.getSourceOffset());
         } else if (thrownException.getCause() instanceof RetryException) {
+            RetryException retryException = (RetryException) thrownException.getCause();
             log.info("RetryException occur, Message will send on topic {} ", retryTopic);
-            sendErrorDataonTopic(thrownException, consumer, record, retryTopic, BootstrapConsumer.RecordType.RETRY);
+            sendErrorDataonTopic(thrownException, consumer, record, retryTopic, BootstrapConsumer.RecordType.RETRY,
+                    retryException.getSourcePartition(), retryException.getSourceOffset());
         } else {
             log.error("Unknown error comes , Message -> {} , Exception -> {} , Exception Cause -> {} ",
                     thrownException.getMessage(), thrownException.getClass().getName(),
                     thrownException.getCause().getClass().getName());
-        }
-    }
-
-    private void sendErrorDataonTopic(Exception thrownException, Consumer<?, ?> consumer,
-            ConsumerRecord<?, ?> failRecord, String topicToSend, BootstrapConsumer.RecordType recordType) {
-        try {
-            kafkaTemplate.send(topicToSend, failRecord.partition(), String.valueOf(failRecord.key()),
-                    recordType.name());
-            consumer.seek(new TopicPartition(failRecord.topic(), failRecord.partition()), failRecord.offset() + 1);
-        } catch (Exception e) {
-            consumer.seek(new TopicPartition(failRecord.topic(), failRecord.partition()), failRecord.offset());
-            throw new KafkaException("Seek to current after exception", thrownException);
         }
     }
 

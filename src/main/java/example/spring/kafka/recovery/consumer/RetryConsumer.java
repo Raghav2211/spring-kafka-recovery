@@ -6,6 +6,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 
+import example.spring.kafka.recovery.consumer.exception.AllRetryExhaustException;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -20,9 +21,9 @@ public class RetryConsumer {
     public void onReceiving(String data, @Header(KafkaHeaders.OFFSET) Integer offset,
             @Header(KafkaHeaders.RECEIVED_PARTITION_ID) int partition,
             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic, Acknowledgment ack) {
-//        throw new IllegalArgumentException();
         log.info("Consume in retry topic = {}, partition = {}, offset = {}, success data = {}", topic, partition,
                 offset, data);
+        throw new AllRetryExhaustException(partition, offset, data);
     }
 
 }

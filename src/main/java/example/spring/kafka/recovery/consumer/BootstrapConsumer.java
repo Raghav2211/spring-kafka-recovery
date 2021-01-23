@@ -40,7 +40,7 @@ public class BootstrapConsumer {
         } else if (data.toUpperCase().trim().equals(RecordType.RETRY.name())) {
             log.info("Processing topic = {}, partition = {}, offset = {}, retry data = {}", topic, partition, offset,
                     data);
-            throw new RetryException(data);
+            throw new RetryException(data, partition, offset);
         } else {
             log.info("Unknown message retrieve , Message should be in {} ", Arrays.asList(RecordType.values()));
         }

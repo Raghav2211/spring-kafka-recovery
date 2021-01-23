@@ -75,15 +75,14 @@ public class KafkaListenerConfig {
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         factory.setErrorHandler(
                 new SeekToCurrentErrorHandler(new DeadLetterPublishingRecoverer(kafkTemplate, (record, exception) -> {
-                    if (exception instanceof AllRetryExhaustException) {
-                        log.error("Sending to Dlq topic on poisonpill data ----- {} ", exception.getMessage());
+                    if (exception.getCause() instanceof AllRetryExhaustException) {
+                        log.error("Sending to Dlq topic all retry exhaust----- {} ", exception.getMessage());
                         return new TopicPartition(dlqTopic, record.partition());
                     } else {
                         return null;
                     }
 
-                }), new FixedBackOff(10000, 5)));
-
+                }), new FixedBackOff(5000, 3)));
         return factory;
     }
 

@@ -5,13 +5,16 @@ import lombok.Getter;
 public class AllRetryExhaustException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
-    private static final String ALL_RETRY_EXHAUST_TEMPLATE = "All retries exhaust for topic %s parition %s, Message -> %s";
+    private static final String ALL_RETRY_EXHAUST_TEMPLATE = "All retries exhaust for parition %s offset %s, Message -> %s";
 
     @Getter
-    private int partition;
+    private int sourcePartition;
+    @Getter
+    private int sourceOffset;
 
-    public AllRetryExhaustException(String topic, int partition, String data) {
-        super(String.format(ALL_RETRY_EXHAUST_TEMPLATE, topic, partition, data));
-        this.partition = partition;
+    public AllRetryExhaustException(int sourcePartition, int sourceOffset, String data) {
+        super(String.format(ALL_RETRY_EXHAUST_TEMPLATE, sourcePartition, sourceOffset, data));
+        this.sourcePartition = sourcePartition;
+        this.sourceOffset = sourceOffset;
     }
 }
