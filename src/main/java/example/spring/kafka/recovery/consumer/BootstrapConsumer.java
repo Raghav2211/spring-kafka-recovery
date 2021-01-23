@@ -6,6 +6,8 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 
+import example.spring.kafka.recovery.consumer.exception.PoisonPillException;
+import example.spring.kafka.recovery.consumer.exception.RetryException;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -33,6 +35,10 @@ public class BootstrapConsumer {
             log.info("Processing topic = {}, partition = {}, offset = {}, poison pill data = {}", topic, partition,
                     offset, data);
             throw new PoisonPillException(data);
+        } else if (data.toUpperCase().trim().equals(RecordType.RETRY.name())) {
+            log.info("Processing topic = {}, partition = {}, offset = {}, retry data = {}", topic, partition, offset,
+                    data);
+            throw new RetryException(data);
         }
     }
 }

@@ -1,4 +1,4 @@
-package example.spring.kafka.recovery.consumer;
+package example.spring.kafka.recovery.consumer.exception;
 
 public class PoisonPillException extends RuntimeException {
 
