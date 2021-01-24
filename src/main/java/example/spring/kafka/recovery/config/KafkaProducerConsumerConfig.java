@@ -13,6 +13,7 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaOperations;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
@@ -53,6 +54,11 @@ public class KafkaProducerConsumerConfig {
     public KafkaTemplate<String, String> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
+    
+    @Bean
+    public KafkaOperations<String, String> kafkaOperation() {
+        return kafkaTemplate();
+    }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaBootstrapListenerContainerFactory(
@@ -68,15 +74,15 @@ public class KafkaProducerConsumerConfig {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaRetryListenerContainerFactory(
-            KafkaTemplate<String, String> kafkTemplate) {
+            KafkaOperations<String, String> kafkaOperation) {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConcurrency(1);
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         factory.setErrorHandler(
-                new SeekToCurrentErrorHandler(new DeadLetterPublishingRecoverer(kafkTemplate, (record, exception) -> {
+                new SeekToCurrentErrorHandler(new DeadLetterPublishingRecoverer(kafkaOperation, (record, exception) -> {
                     if (exception.getCause() instanceof AllRetryExhaustException) {
-                        log.error("All retry exhaust {}, Message will be send on topic {}", exception.getMessage(),
+                        log.info("All retry exhaust {}, Message will be send on topic {}", exception.getMessage(),
                                 dlqTopic);
                         return new TopicPartition(dlqTopic, record.partition());
                     } else {
