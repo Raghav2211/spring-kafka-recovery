@@ -22,15 +22,15 @@ public class BootstrapConsumerErrorHandler implements ContainerAwareErrorHandler
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    private final String dlqTopic;
+    private final String dlt;
 
     private final String retryTopic;
 
     public BootstrapConsumerErrorHandler(KafkaTemplate<String, String> kafkaTemplate,
-            @Value("${app.kafka.outbound.springrecovery.dlq.topic}") String dlqTopic,
+            @Value("${app.kafka.outbound.springrecovery.dlt.topic}") String dlt,
             @Value("${app.kafka.outbound.springrecovery.retry.topic}") String retryTopic) {
         this.kafkaTemplate = kafkaTemplate;
-        this.dlqTopic = dlqTopic;
+        this.dlt = dlt;
         this.retryTopic = retryTopic;
     }
 
@@ -40,8 +40,8 @@ public class BootstrapConsumerErrorHandler implements ContainerAwareErrorHandler
         ConsumerRecord<?, ?> record = records.get(0);
         if (thrownException.getCause() instanceof PoisonPillException) {
             PoisonPillException poisonPillException = (PoisonPillException) thrownException.getCause();
-            log.info("PoisonPillException occur, Message will send on topic {} ", dlqTopic);
-            sendErrorDataonTopic(thrownException, consumer, record, dlqTopic, BootstrapConsumer.RecordType.POISON_PILL,
+            log.info("PoisonPillException occur, Message will send on topic {} ", dlt);
+            sendErrorDataonTopic(thrownException, consumer, record, dlt, BootstrapConsumer.RecordType.POISON_PILL,
                     poisonPillException.getSourcePartition(), poisonPillException.getSourceOffset());
         } else if (thrownException.getCause() instanceof RetryException) {
             RetryException retryException = (RetryException) thrownException.getCause();
@@ -59,8 +59,8 @@ public class BootstrapConsumerErrorHandler implements ContainerAwareErrorHandler
             ConsumerRecord<?, ?> failRecord, String topicToSend, BootstrapConsumer.RecordType recordType,
             int sourcepartition, int sourceOffset) {
         try {
-            String dlqMessage = "M(" + recordType.name() + ")-P(" + sourcepartition + ")-O(" + sourceOffset + ")";
-            kafkaTemplate.send(topicToSend, failRecord.partition(), String.valueOf(failRecord.key()), dlqMessage);
+            String dltMessage = "M(" + recordType.name() + ")-P(" + sourcepartition + ")-O(" + sourceOffset + ")";
+            kafkaTemplate.send(topicToSend, failRecord.partition(), String.valueOf(failRecord.key()), dltMessage);
             consumer.seek(new TopicPartition(failRecord.topic(), failRecord.partition()), failRecord.offset() + 1);
         } catch (Exception e) {
             consumer.seek(new TopicPartition(failRecord.topic(), failRecord.partition()), failRecord.offset());

@@ -30,7 +30,7 @@ app:
           groupId: springrecovery.retry
     outbound:
       springrecovery:
-        dlq:
-          topic: local.springrecovery.dlq
+        dlt:
+          topic: local.springrecovery.dlt
         retry:
           topic: ${app.kafka.inbound.springrecovery.retry.topic}
