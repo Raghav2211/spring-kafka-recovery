@@ -1,5 +1,5 @@
 # spring-kafka-recovery
-![Build](https://github.com/Raghav2211/spring-kafka-recovery/workflows/Build/badge.svg)
+![Build](https://github.com/Raghav2211/spring-kafka-recovery/workflows/Build/badge.svg?branch=main)
 
 Demo of Spring Kafka recovery using retry &amp; dead letter topics 
 
