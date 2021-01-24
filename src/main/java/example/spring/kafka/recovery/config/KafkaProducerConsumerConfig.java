@@ -26,13 +26,13 @@ import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @Slf4j
-public class KafkaListenerConfig {
+public class KafkaProducerConsumerConfig {
 
     private KafkaConfig kafkaConfig;
     @Value("${app.kafka.outbound.springrecovery.dlq.topic}")
     String dlqTopic;
 
-    public KafkaListenerConfig(KafkaConfig appConfig) {
+    public KafkaProducerConsumerConfig(KafkaConfig appConfig) {
         this.kafkaConfig = appConfig;
     }
 
@@ -76,7 +76,8 @@ public class KafkaListenerConfig {
         factory.setErrorHandler(
                 new SeekToCurrentErrorHandler(new DeadLetterPublishingRecoverer(kafkTemplate, (record, exception) -> {
                     if (exception.getCause() instanceof AllRetryExhaustException) {
-                        log.error("Sending to Dlq topic all retry exhaust----- {} ", exception.getMessage());
+                        log.error("All retry exhaust {}, Message will be send on topic {}", exception.getMessage(),
+                                dlqTopic);
                         return new TopicPartition(dlqTopic, record.partition());
                     } else {
                         return null;

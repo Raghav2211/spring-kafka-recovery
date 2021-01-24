@@ -30,15 +30,14 @@ public class BootstrapConsumer {
 
     private void processMessages(String data, Integer offset, int partition, String topic) {
         if (data.toUpperCase().trim().equals(RecordType.SUCCESS.name())) {
-            log.info("Processing topic = {}, partition = {}, offset = {}, success data = {}", topic, partition, offset,
+            log.info("Data successfully consumed topic = {}, partition = {}, offset = {}, data = {}", topic, partition, offset,
                     data);
-            log.info("Data successfully consumed");
         } else if (data.toUpperCase().trim().equals(RecordType.POISON_PILL.name())) {
-            log.info("Processing topic = {}, partition = {}, offset = {}, poison pill data = {}", topic, partition,
+            log.info("Poison pill data consumed topic = {}, partition = {}, offset = {}, data = {}", topic, partition,
                     offset, data);
             throw new PoisonPillException(data, partition, offset);
         } else if (data.toUpperCase().trim().equals(RecordType.RETRY.name())) {
-            log.info("Processing topic = {}, partition = {}, offset = {}, retry data = {}", topic, partition, offset,
+            log.info("Retry data consumed topic = {}, partition = {}, offset = {}, data = {}", topic, partition, offset,
                     data);
             throw new RetryException(data, partition, offset);
         } else {
