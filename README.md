@@ -24,7 +24,7 @@ To check out the project and build from source, do the following:
     $ java -jar build/libs/spring-kafka-recovery-0.0.1.jar
     
     # exec into broker container & send data 
-    $ docker exec -it spring-kafka-recovery-main_broker_1 /usr/bin/kafka-console-producer --broker-list localhost:9092 --topic local.springrecovery.bootstrap
+    $ docker exec -it spring-kafka-recovery_broker_1 /usr/bin/kafka-console-producer --broker-list localhost:9092 --topic local.springrecovery.bootstrap
     > SUCCESS      <-- Consume successful 
     > POISON_PILL  <-- Consume & send to dlt(Deal letter topic)
     > RETRY        <-- Consume & send to retry topic, after provided retries if data not proceed successfully it'll be send to dlt(Deal letter topic)     
