@@ -5,8 +5,6 @@ import java.util.Map;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.TopicPartition;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
@@ -17,23 +15,16 @@ import org.springframework.kafka.core.KafkaOperations;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
-import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
-import org.springframework.util.backoff.FixedBackOff;
+import org.springframework.kafka.listener.ErrorHandler;
 
 import example.spring.kafka.recovery.consumer.BootstrapConsumerErrorHandler;
-import example.spring.kafka.recovery.consumer.exception.AllRetryExhaustException;
-import lombok.extern.slf4j.Slf4j;
 
 @Configuration
-@Slf4j
-public class KafkaProducerConsumerConfig {
+public class KafkaProducerConsumerFactory {
 
     private KafkaConfig kafkaConfig;
-    @Value("${app.kafka.outbound.springrecovery.dlt.topic}")
-    String dlt;
 
-    public KafkaProducerConsumerConfig(KafkaConfig appConfig) {
+    public KafkaProducerConsumerFactory(KafkaConfig appConfig) {
         this.kafkaConfig = appConfig;
     }
 
@@ -54,7 +45,7 @@ public class KafkaProducerConsumerConfig {
     public KafkaTemplate<String, String> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
-    
+
     @Bean
     public KafkaOperations<String, String> kafkaOperation() {
         return kafkaTemplate();
@@ -74,22 +65,12 @@ public class KafkaProducerConsumerConfig {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, String> kafkaRetryListenerContainerFactory(
-            KafkaOperations<String, String> kafkaOperation) {
+            ErrorHandler retryErrorhandler) {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConcurrency(1);
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
-        factory.setErrorHandler(
-                new SeekToCurrentErrorHandler(new DeadLetterPublishingRecoverer(kafkaOperation, (record, exception) -> {
-                    if (exception.getCause() instanceof AllRetryExhaustException) {
-                        log.info("All retry exhaust {}, Message will be send on topic {}", exception.getMessage(),
-                                dlt);
-                        return new TopicPartition(dlt, record.partition());
-                    } else {
-                        return null;
-                    }
-
-                }), new FixedBackOff(5000, 3)));
+        factory.setErrorHandler(retryErrorhandler);
         return factory;
     }
 
