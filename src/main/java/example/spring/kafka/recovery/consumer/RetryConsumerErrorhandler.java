@@ -20,6 +20,12 @@ public class RetryConsumerErrorhandler {
     private final KafkaOperations<String, String> kafkaOperation;
     private final String dlt;
 
+    @Value("${app.kafka.inbound.springrecovery.retry.retry.fixed.interval}")
+    private Long fixedIntervalBtwRetries;
+
+    @Value("${app.kafka.inbound.springrecovery.retry.retry.fixed.maxAttempts}")
+    private Integer maxAttempts;
+
     public RetryConsumerErrorhandler(KafkaOperations<String, String> kafkaOperation,
             @Value("${app.kafka.outbound.springrecovery.dlt.topic}") String dlt) {
         this.kafkaOperation = kafkaOperation;
@@ -36,7 +42,7 @@ public class RetryConsumerErrorhandler {
                 return null;
             }
 
-        }), new FixedBackOff(5000, 3));
+        }), new FixedBackOff(fixedIntervalBtwRetries, maxAttempts));
     }
 
 }

@@ -1,9 +1,8 @@
----
 server:
   port: 8080
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: 'localhost:9092'
     properties:
       reconnect.backoff.ms: 1000
       retry.backoff.ms: 10000
@@ -17,7 +16,7 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
   application:
     name: spring-kafka-recovery
-    version: "${appVersion}"
+    version: '${appVersion}'
 app:
   kafka:
     inbound:
@@ -28,9 +27,14 @@ app:
         retry:
           topic: local.springrecovery.retry
           groupId: springrecovery.retry
+          retry:
+            fixed:
+              enable: true
+              interval: 5000
+              maxAttempts: 3
     outbound:
       springrecovery:
         dlt:
           topic: local.springrecovery.dlt
         retry:
-          topic: ${app.kafka.inbound.springrecovery.retry.topic}
+          topic: '${app.kafka.inbound.springrecovery.retry.topic}'
