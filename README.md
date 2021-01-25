@@ -14,6 +14,7 @@ To check out the project and build from source, do the following:
     $ gh repo clone Raghav2211/spring-kafka-recovery
     
     # Build
+    cd spring-kafka-recovery
     $ ./gradlew build
     
     # Up zookeeper & kafka container 
