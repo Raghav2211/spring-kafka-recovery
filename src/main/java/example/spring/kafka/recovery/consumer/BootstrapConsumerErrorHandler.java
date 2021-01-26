@@ -13,7 +13,7 @@ import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.stereotype.Component;
 
 import example.spring.kafka.recovery.consumer.exception.PoisonPillException;
-import example.spring.kafka.recovery.consumer.exception.RetryException;
+import example.spring.kafka.recovery.consumer.exception.RetriableException;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -43,10 +43,10 @@ public class BootstrapConsumerErrorHandler implements ContainerAwareErrorHandler
             log.info("PoisonPillException occur, Message will send on topic {} ", dlt);
             sendErrorDataonTopic(thrownException, consumer, record, dlt, BootstrapConsumer.RecordType.POISON_PILL,
                     poisonPillException.getSourcePartition(), poisonPillException.getSourceOffset());
-        } else if (thrownException.getCause() instanceof RetryException) {
-            RetryException retryException = (RetryException) thrownException.getCause();
+        } else if (thrownException.getCause() instanceof RetriableException) {
+            RetriableException retryException = (RetriableException) thrownException.getCause();
             log.info("RetryException occur, Message will send on topic {} ", retryTopic);
-            sendErrorDataonTopic(thrownException, consumer, record, retryTopic, BootstrapConsumer.RecordType.RETRY,
+            sendErrorDataonTopic(thrownException, consumer, record, retryTopic, retryException.getRecordType(),
                     retryException.getSourcePartition(), retryException.getSourceOffset());
         } else {
             log.error("Unknown error comes , Message -> {} , Exception -> {} , Exception Cause -> {} ",

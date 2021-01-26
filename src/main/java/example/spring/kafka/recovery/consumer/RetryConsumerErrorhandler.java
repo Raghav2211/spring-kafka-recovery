@@ -10,7 +10,7 @@ import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.util.backoff.FixedBackOff;
 
-import example.spring.kafka.recovery.consumer.exception.AllRetryExhaustException;
+import example.spring.kafka.recovery.consumer.exception.RetriableException;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -35,7 +35,7 @@ public class RetryConsumerErrorhandler {
     @Bean
     public ErrorHandler retryErrorhandler() {
         return new SeekToCurrentErrorHandler(new DeadLetterPublishingRecoverer(kafkaOperation, (record, exception) -> {
-            if (exception.getCause() instanceof AllRetryExhaustException) {
+            if (exception.getCause() instanceof RetriableException) {
                 log.info("All retry exhaust {}, Message will be send on topic {}", exception.getMessage(), dlt);
                 return new TopicPartition(dlt, record.partition());
             } else {
