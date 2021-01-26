@@ -45,7 +45,7 @@ public class BootstrapConsumerErrorHandler implements ContainerAwareErrorHandler
                     poisonPillException.getSourcePartition(), poisonPillException.getSourceOffset());
         } else if (thrownException.getCause() instanceof RetriableException) {
             RetriableException retryException = (RetriableException) thrownException.getCause();
-            log.info("RetryException occur, Message will send on topic {} ", retryTopic);
+            log.info("RetriableException occur, Message will send on topic {} ", retryTopic);
             sendErrorDataonTopic(thrownException, consumer, record, retryTopic, retryException.getRecordType(),
                     retryException.getSourcePartition(), retryException.getSourceOffset());
         } else {
