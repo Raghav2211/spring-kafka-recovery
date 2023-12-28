@@ -9,8 +9,11 @@ spring:
     consumer:
       retry-backoff: 1000
       retry-attempts: 3
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
     producer:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -20,21 +23,7 @@ spring:
 app:
   kafka:
     inbound:
-      springrecovery:
-        bootstrap:
-          topic: local.springrecovery.bootstrap
-          groupId: springrecovery.bootstrap
-        retry:
-          topic: local.springrecovery.retry
-          groupId: springrecovery.retry
-          retry:
-            fixed:
-              enable: true
-              interval: 5000
-              maxAttempts: 3
-    outbound:
-      springrecovery:
-        dlt:
-          topic: local.springrecovery.dlt
-        retry:
-          topic: '${app.kafka.inbound.springrecovery.retry.topic}'
+      bootstrap:
+        topic: local.springrecovery.bootstrap
+        groupId: springrecovery.bootstrap
+        pollTimeout: 10000
