@@ -27,16 +27,3 @@ app:
         topic: local.springrecovery.bootstrap
         groupId: springrecovery.bootstrap
         pollTimeout: 10000
-      retry:
-        topic: local.springrecovery.retry
-        groupId: springrecovery.retry
-        retry:
-          fixed:
-            enable: true
-            interval: 5000
-            maxAttempts: 3
-    outbound:
-      dlt:
-        topic: local.springrecovery.dlt
-      retry:
-        topic: '${app.kafka.inbound.retry.topic}'

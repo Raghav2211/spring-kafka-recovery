@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("app.kafka")
-public record TopicConfig(Map<String, Info> inbound, Map<String, Info> outbound) {
+public record TopicConfig(Map<String, Info> inbound) {
 
   public record Info(String topic, String groupId, long pollTimeout) {}
 

@@ -9,10 +9,10 @@ public class RetriableException extends RuntimeException {
   public static final String RETRY_TEMPLATE = "Consume Retry message , Message -> %s";
 
   @Getter private final int sourcePartition;
-  @Getter private final int sourceOffset;
+  @Getter private final long sourceOffset;
   @Getter private RecordType recordType;
 
-  public RetriableException(RecordType retryRecord, int sourcePartition, int sourceOffset) {
+  public RetriableException(RecordType retryRecord, int sourcePartition, long sourceOffset) {
     super(String.format(RETRY_TEMPLATE, retryRecord.name()));
     this.recordType = retryRecord;
     this.sourcePartition = sourcePartition;

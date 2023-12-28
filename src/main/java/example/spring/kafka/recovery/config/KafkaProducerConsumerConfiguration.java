@@ -5,12 +5,15 @@ import java.util.Collection;
 import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaOperations;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import reactor.kafka.receiver.KafkaReceiver;
 import reactor.kafka.receiver.ReceiverOptions;
 import reactor.kafka.receiver.ReceiverPartition;
@@ -43,6 +46,16 @@ public class KafkaProducerConsumerConfiguration {
             .subscription(Collections.singletonList(bootstrapTopicInfo.topic()));
 
     return KafkaReceiver.create(receiverOptions);
+  }
+
+  @Bean
+  public DeadLetterPublishingRecoverer dltRecoverer(KafkaOperations<String, String> operations) {
+
+    var dltRecoverer =
+        new DeadLetterPublishingRecoverer(
+            operations, (cr, e) -> new TopicPartition(cr.topic() + "-dlt", 0));
+
+    return dltRecoverer;
   }
 
   private void handleAssignment(Collection<ReceiverPartition> receiverPartitions) {
